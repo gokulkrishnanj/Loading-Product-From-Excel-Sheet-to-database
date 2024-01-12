@@ -8,20 +8,18 @@ import com.example.demo.service.ExcelService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.poi.ss.formula.functions.Rows;
-import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @Slf4j
@@ -30,6 +28,7 @@ public class ExcelServiceImpl implements ExcelService {
 
     @Autowired
     ProductRepository productRepository;
+
 
     public String addProduct(MyShopDTO myShopDTO){
         Myshop myshop = new Myshop();
@@ -45,46 +44,8 @@ public class ExcelServiceImpl implements ExcelService {
             XSSFWorkbook workbook = new XSSFWorkbook(file.getInputStream());
             Sheet sheet = workbook.getSheetAt(0);
             Iterator<Row> rowIterator = sheet.iterator();
-            int rowIndex = 0;
             Map<String,ProductDetailDTO> productDetailDTOMap = new HashMap<>();
-            while (rowIterator.hasNext()){
-                Row cuurentRow = rowIterator.next();
-                if(rowIndex==0){
-                    rowIndex++;
-                    continue;
-                }
-                Myshop myshop = new Myshop();
-                Iterator<Cell> cellIterator = cuurentRow.iterator();
-                int cellIndex = 0;
-                while (cellIterator.hasNext()){
-                    Cell currentCell = cellIterator.next();
-                    ProductDetailDTO productDetailDTO = productDetailDTOMap.get(myshop.getPartId());
-                    if(productDetailDTO==null){
-                        productDetailDTO = new ProductDetailDTO();
-                    }
-                    switch (cellIndex){
-                        case 0:
-                            LOG.info("partId:"+ currentCell.getStringCellValue());
-                            myshop.setPartId(currentCell.getStringCellValue());
-                            break;
-                        case 1:
-                            LOG.info("quantity:"+currentCell.getNumericCellValue());
-                            myshop.setQuantity((int)currentCell.getNumericCellValue());
-                            productDetailDTO.setQuantity((int)currentCell.getNumericCellValue());
-                            break;
-                        case 2:
-                            LOG.info("price:"+currentCell.getNumericCellValue());
-                            myshop.setPrice(currentCell.getNumericCellValue());
-                            productDetailDTO.setPrice(currentCell.getNumericCellValue());
-                            break;
-                        default:
-                            break;
-                    }
-                    productDetailDTOMap.put(myshop.getPartId(),productDetailDTO);
-                    cellIndex++;
-                }
-
-            }
+            processProductMap(rowIterator,productDetailDTOMap);
             LOG.info("dto--->"+productDetailDTOMap);
             productDetailDTOMap.forEach((partId, productDetailDTO) -> {
                 Myshop myshop = new Myshop();
@@ -100,5 +61,49 @@ public class ExcelServiceImpl implements ExcelService {
         }
         return "Product Added";
     }
+
+    public void processProductMap(Iterator<Row> rowIterator, Map<String, ProductDetailDTO> productDetailDTOMap) {
+        int rowIndex = 0;
+        while (rowIterator.hasNext()) {
+            Row cuurentRow = rowIterator.next();
+            LOG.info("currentRow--->" + cuurentRow.toString());
+            if (rowIndex == 0) {
+                rowIndex++;
+                continue;
+            }
+            Myshop myshop = new Myshop();
+            Iterator<Cell> cellIterator = cuurentRow.iterator();
+            int cellIndex = 0;
+            while (cellIterator.hasNext()) {
+                Cell currentCell = cellIterator.next();
+                ProductDetailDTO productDetailDTO = productDetailDTOMap.get(myshop.getPartId());
+                if (productDetailDTO == null) {
+                    productDetailDTO = new ProductDetailDTO();
+                }
+                switch (cellIndex) {
+                    case 0:
+                        LOG.info("partId:" + currentCell.getStringCellValue());
+                        myshop.setPartId(currentCell.getStringCellValue());
+                        break;
+                    case 1:
+                        LOG.info("quantity:" + currentCell.getNumericCellValue());
+                        myshop.setQuantity((int) currentCell.getNumericCellValue());
+                        productDetailDTO.setQuantity((int) currentCell.getNumericCellValue());
+                        break;
+                    case 2:
+                        LOG.info("price:" + currentCell.getNumericCellValue());
+                        myshop.setPrice(currentCell.getNumericCellValue());
+                        productDetailDTO.setPrice(currentCell.getNumericCellValue());
+                        break;
+                    default:
+                        break;
+                }
+                productDetailDTOMap.put(myshop.getPartId(), productDetailDTO);
+                cellIndex++;
+            }
+
+        }
+    }
+
 
 }
