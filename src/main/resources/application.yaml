@@ -1,4 +1,9 @@
 server:
+<<<<<<< Updated upstream
+=======
+  servlet:
+    cont
+>>>>>>> Stashed changes
   port: 8080
 
 spring:
