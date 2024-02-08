@@ -17,6 +17,6 @@ public interface ExcelAPI {
     @PostMapping(value = "${addProduct}")
     ResponseEntity<String> addProduct(@Valid @RequestBody MyShopDTO myShopDTO);
 
-    @PostMapping(value = "/addDataFromSheet")
+    @PostMapping(value = "${addDataFromSheet}")
     ResponseEntity<String> addDataFromSheet(@RequestParam(value = "file") MultipartFile file);
 }

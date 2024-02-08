@@ -1,10 +1,12 @@
-excel : /excel/api/v1
+excel : /api/v1
 health : /health
 addProduct : /addProduct
 addDataFromSheet : /addDataFromSheet
 
 server:
   port: 7000
+  servlet:
+    context-path: /excel
 
 spring:
   servlet:
